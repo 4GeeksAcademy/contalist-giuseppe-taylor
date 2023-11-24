@@ -12,9 +12,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 					background: "white",
 					initial: "white"
 				}
-			]
+			],
+			todos:[]
 		},
 		actions: {
+			agregarTodos:(nuevoTodo)=>{
+               let {todos}=getStore().todos
+			   setStore({todos:[...todos, nuevoTodo]})
+			},
 			// Use getActions to call a function within a fuction
 			exampleFunction: () => {
 				getActions().changeColor(0, "green");
