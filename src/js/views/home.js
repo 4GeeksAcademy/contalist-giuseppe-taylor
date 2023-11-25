@@ -5,26 +5,53 @@ import "../../styles/home.css";
 
 export const Home = () => {
 	const{store, actions}=useContext(Context)
-	const [inputText, setInputText]=useState("")
-	useEffect(()=>{
-		console.log("Todos actualizados")
-	},[store.todos])
+	const {obtenerContactos,agregarContacto}=actions;
 
-	/*function agregarTodo(){
-		actions.agregarTodo(inputText)
-	}*/
+	
+	
+	useEffect(()=>{
+	
+		const cargarContactos=async()=>{
+			const contactos=await obtenerContactos("alberto-agenda")
+			console.log("revisandoerro",contactos)
+			
+			
+		}
+		 cargarContactos();
+		
+	},[])
+
+	const submitForm= async (e)=>{
+		e.preventDefault()
+		
+		await agregarContacto({
+			"full_name": e.target.elements.nombre.value,
+			"email": e.target.elements.email.value,
+			"agenda_slug": "alberto-agenda",
+			"address":e.target.elements.direction.value,
+			"phone":e.target.elements.telefono.value
+		}
+   )
+	}
 	return(
 	<div className="text-center mt-5">
 		<h1>Hello Rigo!</h1>
 		<ul className="list-group">
-          <li>
-			<input className="list-group-item" type="text" onChange={(e)=>setInputText(e.target.value)} value={inputText}/>
+          <li className="list-group-item">
+            <form onSubmit={submitForm}>
+              <input className="form-control" type="text" placeholder="Nombre" name="nombre"/>
+			  <input className="form-control" type="text" placeholder="Telefono" name="telefono"/>
+			  <input className="form-control" type="text" placeholder="Email" name="email"/>
+			  <input className="form-control" type="text" placeholder="Direction" name="direction"/>
+			  <button type="submit" className="btn btn-success">Add Contact</button>
+			</form>
 		  </li>
-		  {store.todos.map((todo,index)=>(<li key={index}className="list-group-item">{todo}</li>))}
-		  <li><button onClick={e=>actions.agregarTodo(inputText)} className="btn btn-success">agregar</button></li>
+		  {store.contactos?.map((contact,index)=>(<li key={index}className="list-group-item">
+			<h1>{contact.agenda_slug}</h1>
+			{contact.address}
+			</li>))}
 		</ul>
-		<a href="#" className="btn btn-success">
-			If you see this green button, bootstrap is working
-		</a>
-	</div>
+
+	
+	</div> 
 )}
