@@ -3,20 +3,20 @@
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
-			contactos:[],
+			contactos: [],
 		},
 		actions: {
-			agregarContacto:(nuevoContacto)=>{
-               const contactos=getStore().contactos
-			   console.log("errormaserror",contactos)
-			   setStore({contactos:[...contactos, nuevoContacto]})
+			agregarContacto: (nuevoContacto) => {
+				const contactos = getStore().contactos
+				console.log("errormaserror", contactos)
+				setStore({ contactos: [...contactos, nuevoContacto] })
 			},
 			//...
-			actualizarContacto:async(contacto)=>{
+			actualizarContacto: async (contacto) => {
 				try {
 					const { apiFetchProtected } = getActions();
-					const resp = await apiFetchProtected("/apis/fake/contact/"+ contacto.id, "PUT",  contacto );
-						//console.log(resp)
+					const resp = await apiFetchProtected("/apis/fake/contact/" + contacto.id, "PUT", contacto);
+					//console.log(resp)
 					if (resp.code === 200) {
 						// Actualiza el estado global con la nueva información del perfil
 						const store = getStore()
@@ -26,97 +26,99 @@ const getState = ({ getStore, getActions, setStore }) => {
 						return "Ok"; // Puedes devolver los datos actualizados si es necesario
 					} else {
 						// La solicitud al servidor falló
-						throw new Error("Error al procesar la solicitud de edición del perfil" + resp.code );
+						throw new Error("Error al procesar la solicitud de edición del perfil" + resp.code);
 					}
-					} catch (error) {
-					  Error("Error al realizar la edición del perfil", error  );
-					}
+				} catch (error) {
+					Error("Error al realizar la edición del perfil", error);
+				}
 			},
-			borrarContacto:async(contactoId)=>{
+			borrarContacto: async (contactoId) => {
 				try {
 					const { apiFetchPublic } = getActions();
-					const resp = await apiFetchPublic("/apis/fake/contact/"+ contactoId, "DELETE" );
-						//console.log(resp)
+					console.log("errrrrrrrrrror", "/apis/fake/contact/" + contactoId, "DELETE");
+					const resp = await apiFetchPublic("/apis/fake/contact/" + contactoId, "DELETE");
+					console.log(resp);
+
+					if (resp && resp.code === 200) {
+						const nuevosContactos = getStore().contactos.filter(contacto => contacto.id !== contactoId);
+						setStore({ contactos: nuevosContactos });
+						alert("Contacto eliminado con éxito");
+						return "Ok";
+					} else {
+						throw new Error("Error al procesar la solicitud de eliminación del contacto: " + resp.code);
+					}
+				} catch (error) {
+					console.error("Error al realizar la eliminación del contacto", error);
+				}
+			},
+			obtenerContacto: async (contactoId) => {
+				try {
+					const { apiFetchPublic } = getActions();
+					const resp = await apiFetchPublic("/apis/fake/contact/" + contactoId, "GET");
+					//console.log(resp)
 					if (resp.code === 200) {
 						// Actualiza el estado global con la nueva información del perfil
 						const store = getStore()
-						store.contactos.splice(contactoId)
-						setStore(store)
-						alert("Perfil actualizado con exito")
+						setStore({ contactos: [resp.data] })
 						return "Ok"; // Puedes devolver los datos actualizados si es necesario
 					} else {
 						// La solicitud al servidor falló
-						throw new Error("Error al procesar la solicitud de edición del perfil" + resp.code );
+						throw new Error("Error al procesar la solicitud de edición del perfil" + resp.code);
 					}
-					} catch (error) {
-					  Error("Error al realizar la edición del perfil", error  );
-					}
-				
+				} catch (error) {
+					Error("Error al realizar la edición del perfil", error);
+				}
 			},
-			obtenerContacto:async(contactoId)=>{
+			obtenerContactos: async (agendaSlug) => {
 				try {
 					const { apiFetchPublic } = getActions();
-					const resp = await apiFetchPublic("/apis/fake/contact/"+ contactoId, "GET" );
-						//console.log(resp)
+					const resp = await apiFetchPublic("/apis/fake/contact/agenda/" + agendaSlug, "GET");
+					//console.log(resp)
 					if (resp.code === 200) {
 						// Actualiza el estado global con la nueva información del perfil
-						const store = getStore()
-						setStore({contactos:[resp.data]})
+						console.log("flugerror", resp)
+						setStore({ contactos: resp.data })
 						return "Ok"; // Puedes devolver los datos actualizados si es necesario
 					} else {
 						// La solicitud al servidor falló
-						throw new Error("Error al procesar la solicitud de edición del perfil" + resp.code );
+						throw new Error("Error al procesar la solicitud de edición del perfil" + resp.code);
 					}
-					} catch (error) {
-					  Error("Error al realizar la edición del perfil", error  );
-					}
-			},
-			obtenerContactos:async(agendaSlug)=>{
-				try {
-					const { apiFetchPublic } = getActions();
-					const resp = await apiFetchPublic("/apis/fake/contact/agenda/"+ agendaSlug, "GET" );
-						//console.log(resp)
-					if (resp.code === 200) {
-						// Actualiza el estado global con la nueva información del perfil
-						console.log("flugerror",resp)
-						setStore({contactos:resp.data})
-						return "Ok"; // Puedes devolver los datos actualizados si es necesario
-					} else {
-						// La solicitud al servidor falló
-						throw new Error("Error al procesar la solicitud de edición del perfil" + resp.code );
-					}
-					} catch (error) {
-					  Error("Error al realizar la edición del perfil", error  );
-					}
+				} catch (error) {
+					Error("Error al realizar la edición del perfil", error);
+				}
 			},
 			apiFetchPublic: async (endpoint, method = "GET", body = null) => {
 				try {
-					var request
-					if (method == "GET") {
-						request = fetch(process.env.BACKEND_URL + endpoint)
+					var request;
+					if (method === "GET") {
+						request = fetch(process.env.BACKEND_URL + endpoint);
 					} else {
-						//objeto params con lo necesario para la petición que no es get
 						const params = {
 							method,
 							headers: {
 								"Content-Type": "application/json",
 								"Access-Control-Allow-Origin": "*"
 							}
-						}
-						//si hay body lo agregamos a los params
-						if (body) params.body = JSON.stringify(body)
-						request = fetch(process.env.BACKEND_URL + "/api" + endpoint, params)
+						};
+						if (body) params.body = JSON.stringify(body);
+						request = fetch(process.env.BACKEND_URL + "/api" + endpoint, params);
 					}
-					//hacemos la petición
-					const resp = await request
-					//obtenemos los datos de la petición
-					const data = await resp.json()
-					//console.log("PRUEBA_fetchpublic" + JSON.stringify(data) + resp.status)
-					return { code: resp.status, data }
+
+					const resp = await request;
+
+					if (resp && resp.status === 200) {
+						const data = await resp.json();
+						return { code: resp.status, data };
+					} else {
+						console.error("Error de red al realizar la solicitud:", resp.status);
+						return { code: resp.status, data: null };
+					}
 				} catch (error) {
-					console.log("Error al solicitar los datos", error)
+					console.error("Error de red al realizar la solicitud:", error);
+					return { code: 500, data: null };
 				}
 			},
+
 			apiFetchProtected: async (endpoint, method = "GET", body = null) => {
 				try {
 					//objeto params con lo necesario para la petición que no es get
@@ -147,9 +149,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("Error al solicitar los datos", error)
 				}
 			},
-			
-			
-	     
+
+
+
 		}
 	};
 };
