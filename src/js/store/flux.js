@@ -6,18 +6,25 @@ const getState = ({ getStore, getActions, setStore }) => {
 			contactos: [],
 		},
 		actions: {
-			agregarContacto: (nuevoContacto) => {
+			agregarContacto: async (nuevoContacto) => {
+				const { apiFetchPublic } = getActions();
 				const contactos = getStore().contactos
-				console.log("errormaserror", contactos)
-				setStore({ contactos: [...contactos, nuevoContacto] })
+				const resp = await apiFetchPublic("/apis/fake/contact/", "POST", nuevoContacto);
+				if (resp.code === 201) {
+					setStore({ contactos: [...contactos, nuevoContacto] })
+				} else {
+					// La solicitud al servidor falló
+					throw new Error("Error al procesar la solicitud de creacion del perfil" + resp.code);
+				}
+
 			},
 			//...
 			actualizarContacto: async (contacto) => {
 				try {
-					const { apiFetchProtected } = getActions();
-					const resp = await apiFetchProtected("/apis/fake/contact/" + contacto.id, "PUT", contacto);
-					//console.log(resp)
-					if (resp.code === 200) {
+					const { apiFetchPublic } = getActions();
+					const resp = await apiFetchPublic("/apis/fake/contact/" + contacto.id, "PUT", contacto);
+					console.log("Editandoerror:", contacto, resp)
+					if (resp.code === 201) {
 						// Actualiza el estado global con la nueva información del perfil
 						const store = getStore()
 						store.contactos.splice(contacto)
@@ -35,11 +42,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 			borrarContacto: async (contactoId) => {
 				try {
 					const { apiFetchPublic } = getActions();
-					console.log("errrrrrrrrrror", "/apis/fake/contact/" + contactoId, "DELETE");
 					const resp = await apiFetchPublic("/apis/fake/contact/" + contactoId, "DELETE");
-					console.log(resp);
 
-					if (resp && resp.code === 200) {
+					if (resp && resp.code === 201) {
 						const nuevosContactos = getStore().contactos.filter(contacto => contacto.id !== contactoId);
 						setStore({ contactos: nuevosContactos });
 						alert("Contacto eliminado con éxito");
@@ -101,12 +106,12 @@ const getState = ({ getStore, getActions, setStore }) => {
 							}
 						};
 						if (body) params.body = JSON.stringify(body);
-						request = fetch(process.env.BACKEND_URL + "/api" + endpoint, params);
+						request = fetch(process.env.BACKEND_URL + endpoint, params);
 					}
 
 					const resp = await request;
 
-					if (resp && resp.status === 200) {
+					if (resp && (resp.status === 200 || resp.status === 201)) {
 						const data = await resp.json();
 						return { code: resp.status, data };
 					} else {
